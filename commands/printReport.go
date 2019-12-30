@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"fmt"
 	"github.com/chyupa/fp700"
 	"github.com/chyupa/fp700/utils"
 
@@ -17,11 +18,12 @@ type ReportXResponse struct {
 	VatSInv    int
 }
 
-func ReportX() ReportXResponse {
+func PrintReport(reportType string) ReportXResponse {
 	var decodedMessage = &utils.DecodedMessage{}
 	response := ReportXResponse{}
 
-	reply, err := fp700.SendCommand(69, "X\t")
+	payload := fmt.Sprintf("%s\t", reportType)
+	reply, err := fp700.SendCommand(69, payload)
 
 	if err != nil {
 		log.Fatal(err)
