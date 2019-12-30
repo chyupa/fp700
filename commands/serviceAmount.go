@@ -3,8 +3,8 @@ package commands
 import (
 	"github.com/chyupa/fp700"
 	"github.com/chyupa/fp700/utils"
+	"log"
 	"strconv"
-	"strings"
 )
 
 type ServiceAmountRequest struct {
@@ -12,12 +12,15 @@ type ServiceAmountRequest struct {
 }
 
 func ServiceAmount(data ServiceAmountRequest) int {
-	cmdResponse, _ := fp700.SendCommand(70, "0\t" + data.amount + "\t")
+	var decodedMessage = &utils.DecodedMessage{}
+	cmdResponse, _ := fp700.SendCommand(70, "0\t"+data.amount+"\t")
 
-	msg := utils.DecodeMessage(cmdResponse)
-	split := strings.Split(msg, "\t")
+	msg, err := decodedMessage.DecodeMessage(cmdResponse)
+	if err != nil {
+		log.Println(err)
+	}
 
-	errorCode, _ := strconv.Atoi(split[0])
+	errorCode, _ := strconv.Atoi(msg[0])
 
 	return errorCode
 }

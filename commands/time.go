@@ -1,35 +1,35 @@
 package commands
 
 import (
+	"errors"
 	"github.com/chyupa/fp700"
 	"github.com/chyupa/fp700/utils"
 	"log"
 	"strconv"
-	"strings"
 )
 
-type TimeResponse struct {
-	ErrorCode int
-	Time string
-}
-func Time() *TimeResponse  {
-
+func Time() (string, error) {
+	var decodedMessage = &utils.DecodedMessage{}
 	reply, err := fp700.SendCommand(62, "")
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return "", err
 	}
 
 	if len(reply) > 2 {
-		msg := utils.DecodeMessage(reply)
-		split := strings.Split(msg, "\t")
-		if len(split) > 1 {
-			errorCode, _ := strconv.Atoi(split[0])
-			return &TimeResponse{
-				ErrorCode: errorCode,
-				Time: split[1],
+		msg, err := decodedMessage.DecodeMessage(reply)
+		if err != nil {
+			log.Println(err)
+			return "", err
+		}
+		if len(msg) > 1 {
+			errorCode, _ := strconv.Atoi(msg[0])
+			if errorCode < -1 {
+				return "", errors.New(msg[0])
 			}
+			return msg[1], nil
 		}
 	}
 
-	return &TimeResponse{}
+	return "", errors.New("something went wrong")
 }

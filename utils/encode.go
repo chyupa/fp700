@@ -41,9 +41,9 @@ func EncodeMessage(command int, payload string) []byte {
 
 	bytes = append(bytes, checksum...)
 
-	bytes = append(bytes, 3)
-
 	bytes = append([]int{1}, bytes...)
+
+	bytes = append(bytes, 3)
 
 	return convertToBytes(bytes)
 }

@@ -1,25 +1,75 @@
 package utils
 
 import (
+	"errors"
+	"fmt"
 	"strconv"
+	"strings"
 )
 
-func DecodeMessage(message []byte) string {
+type DecodedMessage struct {
+	Raw    []byte
+	Length int64
+	Data   []byte
+	Status []byte
+}
+
+func (dm *DecodedMessage) DecodeMessage(message []byte) ([]string, error) {
+	startingIndex := IndexOf(message, 1)
+	if startingIndex != -1 {
+		message = append(message[startingIndex:])
+	}
+
+	if message[0] != 1 && message[len(message)-1] != 3 {
+		return nil, errors.New("formatul mesajului este incorect")
+	}
+	dm.Raw = message
 	length := reconstructHexFromByteArray(message[1:5])
 
 	intLength, _ := strconv.ParseInt(length, 16, 0)
-	LEN := intLength - 32
+	dm.Length = intLength - 32
 
-	DATA := message[10:LEN]
+	dm.Data = message[10:dm.Length]
 
-	statusSeparatorPosition := IndexOf(DATA, 0x04)
+	statusSeparatorPosition := IndexOf(dm.Data, 0x04)
 	if statusSeparatorPosition >= -1 {
-		msg := DATA[0:statusSeparatorPosition]
+		dm.Status = dm.Data[statusSeparatorPosition+1 : statusSeparatorPosition+8]
+		msg := dm.Data[0:statusSeparatorPosition]
 
-		return string(msg)
+		if !dm.validateChecksum() {
+			return nil, errors.New("nu am putut valida raspunsul")
+		}
+
+		split := strings.Split(string(msg), "\t")
+		errorCode, _ := strconv.Atoi(split[0])
+		if errorCode != -100003 && errorCode != -111015 && errorCode != -111016 && errorCode < 0 {
+			return nil, errors.New(fmt.Sprintf("%d", errorCode))
+		}
+		return split, nil
 	}
 
-	return ""
+	return nil, nil
+}
+
+func (dm *DecodedMessage) validateChecksum() bool {
+	msgChecksum := dm.Raw[1 : len(dm.Raw)-5]
+	var intChecksum []int
+	for _, char := range msgChecksum {
+		intChecksum = append(intChecksum, int(char))
+	}
+
+	sumChecksum := arraySum(intChecksum)
+	hexChecksum := strconv.FormatInt(int64(sumChecksum), 16)
+
+	expectedChecksum := hexToPrinterFormat(hexChecksum)
+
+	givenChecksum := dm.Raw[dm.Length+1 : len(dm.Raw)-1]
+	for idx, b := range givenChecksum {
+		if int(b) != expectedChecksum[idx] {
+			return false
+		}
+	}
+	return true
 }
 
 func reconstructHexFromByteArray(byteArray []byte) string {
@@ -34,23 +84,4 @@ func reconstructHexFromByteArray(byteArray []byte) string {
 	}
 
 	return hexString
-}
-
-func IndexOf(byteArray []byte, bit byte) int {
-	for index, b := range byteArray {
-		if bit == b {
-			return index
-		}
-	}
-
-	return -1
-}
-
-func ArrayContains(arr []byte, s int) bool {
-	for _, a := range arr {
-		if int(a) == s {
-			return true
-		}
-	}
-	return false
 }
