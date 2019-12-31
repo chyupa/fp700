@@ -9,6 +9,9 @@ import (
 
 type MaintenanceDataResponse struct {
 	OperName        string
+	CurrNameLocal   string
+	OperPasw        string
+	Time            string
 	Header1         string
 	Header2         string
 	Header3         string
@@ -35,6 +38,27 @@ func MaintenanceData() MaintenanceDataResponse {
 		log.Println(err)
 	}
 	mdResponse.OperName = operNameDecoded[1]
+
+	currNameLocalResponse, _ := fp700.SendCommand(255, "CurrNameLocal\t\t\t")
+	currNameLocalDecoded, err := decodedMessage.DecodeMessage(currNameLocalResponse)
+	if err != nil {
+		log.Println(err)
+	}
+	mdResponse.CurrNameLocal = currNameLocalDecoded[1]
+
+	operPassResponse, _ := fp700.SendCommand(255, "OperPasw\t0\t\t")
+	operPassDecoded, err := decodedMessage.DecodeMessage(operPassResponse)
+	if err != nil {
+		log.Println(err)
+	}
+	mdResponse.OperPasw = operPassDecoded[1]
+
+	timeResponse, _ := fp700.SendCommand(62, "")
+	timeDecoded, err := decodedMessage.DecodeMessage(timeResponse)
+	if err != nil {
+		log.Println(err)
+	}
+	mdResponse.Time = timeDecoded[1]
 
 	// header
 	header1Response, _ := fp700.SendCommand(255, "Header\t0\t\t")
