@@ -5,7 +5,6 @@ import (
 	"github.com/chyupa/fp700"
 	"github.com/chyupa/fp700/utils"
 	"log"
-	"strconv"
 )
 
 func Time() (string, error) {
@@ -22,14 +21,25 @@ func Time() (string, error) {
 			log.Println(err)
 			return "", err
 		}
-		if len(msg) > 1 {
-			errorCode, _ := strconv.Atoi(msg[0])
-			if errorCode < -1 {
-				return "", errors.New(msg[0])
-			}
-			return msg[1], nil
-		}
+
+		return msg[1], nil
 	}
 
 	return "", errors.New("something went wrong")
+}
+
+type SetTimeRequest struct {
+	Time string `json:"time"`
+}
+
+func SetTime(data SetTimeRequest) string {
+	var decodedMessage = &utils.DecodedMessage{}
+
+	setTimeResponse, _ := fp700.SendCommand(61, data.Time+"\t")
+	setTimeDecoded, err := decodedMessage.DecodeMessage(setTimeResponse)
+	if err != nil {
+		log.Println(err)
+	}
+
+	return setTimeDecoded[0]
 }

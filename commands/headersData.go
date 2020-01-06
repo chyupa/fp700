@@ -109,3 +109,22 @@ func SetHeadersData(data SetHeadersDataRequest) SetHeadersDataResponse {
 
 	return shdResponse
 }
+
+func GetHeaderChanges() SetHeadersDataResponse {
+	var decodedMessage = &utils.DecodedMessage{}
+	var shdResponse SetHeadersDataResponse
+
+	// read information regarding header changes
+	readHeader, _ := fp700.SendCommand(43, "I\t")
+	readHeaderDecoded, err := decodedMessage.DecodeMessage(readHeader)
+	if err != nil {
+		log.Println(err)
+	}
+
+	shdResponse.ErrorCode, _ = strconv.Atoi(readHeaderDecoded[0])
+	shdResponse.HdrChanges, _ = strconv.Atoi(readHeaderDecoded[1])
+	shdResponse.MaxHdrChanges, _ = strconv.Atoi(readHeaderDecoded[2])
+	shdResponse.MaxHdrLines, _ = strconv.Atoi(readHeaderDecoded[3])
+
+	return shdResponse
+}

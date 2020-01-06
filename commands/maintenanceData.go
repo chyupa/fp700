@@ -1,31 +1,47 @@
 package commands
 
 import (
+	"fmt"
 	"github.com/chyupa/fp700"
 	"github.com/chyupa/fp700/utils"
 	"log"
 	"strconv"
+	"strings"
 )
 
+type Diagnostic struct {
+	Model        string
+	Firmware     string
+	SerialNumber string
+}
+
+type DeviceInformation struct {
+	FabricationNumber string
+	FiscalNumber      string
+	CIF               string
+}
+
 type MaintenanceDataResponse struct {
-	OperName        string
-	CurrNameLocal   string
-	OperPasw        string
-	Time            string
-	Header1         string
-	Header2         string
-	Header3         string
-	Header4         string
-	Header5         string
-	Header6         string
-	Footer1         string
-	Footer2         string
-	NZReport        string
-	Fiscalized      string
-	ActiveVatGroups string
-	NHeaderChanges  int
-	NVatChanges     string
-	OperatingMode   string
+	OperName          string
+	CurrNameLocal     string
+	OperPasw          string
+	Time              string
+	Header1           string
+	Header2           string
+	Header3           string
+	Header4           string
+	Header5           string
+	Header6           string
+	Footer1           string
+	Footer2           string
+	NZReport          string
+	Fiscalized        string
+	ActiveVatGroups   string
+	NHeaderChanges    int
+	NVatChanges       string
+	OperatingMode     string
+	Diagnostic        Diagnostic
+	DeviceInformation DeviceInformation
 }
 
 func MaintenanceData() MaintenanceDataResponse {
@@ -135,13 +151,12 @@ func MaintenanceData() MaintenanceDataResponse {
 	mdResponse.Fiscalized = fiscalizedDecoded[1]
 
 	// ActiveVatGroups
-	// TODO: simething complicated here; leave it for now
-	//activeVatGroupsResponse, _ := fp700.SendCommand(50, "")
-	//, erractiveVatGroupsDecoded := decodedMessage.DecodeMessage()(activeVatGroupsResponse)
+	activeVatGroupsResponse, _ := fp700.SendCommand(50, "")
+	activeVatGroupsDecoded, err := decodedMessage.DecodeMessage(activeVatGroupsResponse)
 	if err != nil {
 		log.Println(err)
 	}
-	//mdResponse.ActiveVatGroups= //,[1]
+	mdResponse.ActiveVatGroups = activeVatGroupsDecoded[2]
 
 	// nHeaderChanges
 	nHeaderChangesResponse, _ := fp700.SendCommand(43, "I\t")
@@ -169,6 +184,33 @@ func MaintenanceData() MaintenanceDataResponse {
 	}
 	mdResponse.OperatingMode = operatingModeDecoded[1]
 
-	return mdResponse
+	// Diagnostic
+	diagnosticResponse, _ := fp700.SendCommand(90, "1\t")
+	diagnosticResponseDecoded, err := decodedMessage.DecodeMessage(diagnosticResponse)
+	if err != nil {
+		log.Println(err)
+	}
+	mdDiagnosticResponse := Diagnostic{
+		Model:        diagnosticResponseDecoded[1],
+		Firmware:     fmt.Sprintf("Rev %s / %s", diagnosticResponseDecoded[2], diagnosticResponseDecoded[3]),
+		SerialNumber: diagnosticResponseDecoded[7],
+	}
+	mdResponse.Diagnostic = mdDiagnosticResponse
 
+	// Device Information
+	deviceInformationResponse, _ := fp700.SendCommand(123, "1\t")
+	deviceInformationResponseDecoded, err := decodedMessage.DecodeMessage(deviceInformationResponse)
+	if err != nil {
+		log.Println(err)
+	}
+
+	mdDeviceInformationResponse := DeviceInformation{
+		FabricationNumber: deviceInformationResponseDecoded[1],
+		FiscalNumber:      deviceInformationResponseDecoded[2],
+		CIF:               strings.Replace(deviceInformationResponseDecoded[5], "CIF: ", "", 1),
+	}
+
+	mdResponse.DeviceInformation = mdDeviceInformationResponse
+
+	return mdResponse
 }
