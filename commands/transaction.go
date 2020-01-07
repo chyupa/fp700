@@ -1,9 +1,10 @@
 package commands
 
 import (
+	"fmt"
+	"github.com/chyupa/apiServer/utils/logger"
 	"github.com/chyupa/fp700"
 	"github.com/chyupa/fp700/utils"
-	"log"
 	"strconv"
 )
 
@@ -27,22 +28,21 @@ type TransactionResponse struct {
 	Payed      int
 }
 
-func Transaction(transactionRequest TransactionRequest) TransactionResponse {
+func Transaction(transactionRequest TransactionRequest) (TransactionResponse, error) {
 	var decodedMessage = &utils.DecodedMessage{}
 	// check if receipt is open and cancel it
 	LastReceipt(true)
 
 	var transactionResponse TransactionResponse
 	for _, command := range transactionRequest.Commands {
-		//time.Sleep(time.Millisecond * 200)
 		response, _ := fp700.SendCommand(command.Code, command.Payload)
-		log.Println(response)
 		if len(response) > 2 {
-			msg, err := decodedMessage.DecodeMessage(response)
+			_, err := decodedMessage.DecodeMessage(response)
 			if err != nil {
-				log.Println(err)
+				fmt.Println(err)
+				logger.Error.Println(err)
+				return transactionResponse, err
 			}
-			log.Println(command, msg)
 		}
 	}
 
@@ -50,7 +50,9 @@ func Transaction(transactionRequest TransactionRequest) TransactionResponse {
 	if len(checkLastReceipt) > 2 {
 		msg, err := decodedMessage.DecodeMessage(checkLastReceipt)
 		if err != nil {
-			log.Println(err)
+			fmt.Println(err)
+			logger.Error.Println(err)
+			return transactionResponse, err
 		}
 
 		transactionResponse.ErrorCode, _ = strconv.Atoi(msg[0])
@@ -63,5 +65,5 @@ func Transaction(transactionRequest TransactionRequest) TransactionResponse {
 		transactionResponse.Payed, _ = strconv.Atoi(msg[7])
 	}
 
-	return transactionResponse
+	return transactionResponse, nil
 }

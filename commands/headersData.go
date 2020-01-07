@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"fmt"
+	"github.com/chyupa/apiServer/utils/logger"
 	"github.com/chyupa/fp700"
 	"github.com/chyupa/fp700/utils"
 	"log"
@@ -82,7 +84,7 @@ type SetHeadersDataRequest struct {
 	Header6 string `json:"headerLine6"`
 }
 
-func SetHeadersData(data SetHeadersDataRequest) SetHeadersDataResponse {
+func SetHeadersData(data SetHeadersDataRequest) (SetHeadersDataResponse, error) {
 	var decodedMessage = &utils.DecodedMessage{}
 	var shdResponse SetHeadersDataResponse
 	fp700.SendCommand(43, "W\t1\t"+data.Header1+"\t")
@@ -99,7 +101,9 @@ func SetHeadersData(data SetHeadersDataRequest) SetHeadersDataResponse {
 	readHeader, _ := fp700.SendCommand(43, "I\t")
 	readHeaderDecoded, err := decodedMessage.DecodeMessage(readHeader)
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
+		logger.Error.Println(err)
+		return shdResponse, err
 	}
 
 	shdResponse.ErrorCode, _ = strconv.Atoi(readHeaderDecoded[0])
@@ -107,10 +111,10 @@ func SetHeadersData(data SetHeadersDataRequest) SetHeadersDataResponse {
 	shdResponse.MaxHdrChanges, _ = strconv.Atoi(readHeaderDecoded[2])
 	shdResponse.MaxHdrLines, _ = strconv.Atoi(readHeaderDecoded[3])
 
-	return shdResponse
+	return shdResponse, nil
 }
 
-func GetHeaderChanges() SetHeadersDataResponse {
+func GetHeaderChanges() (SetHeadersDataResponse, error) {
 	var decodedMessage = &utils.DecodedMessage{}
 	var shdResponse SetHeadersDataResponse
 
@@ -118,7 +122,9 @@ func GetHeaderChanges() SetHeadersDataResponse {
 	readHeader, _ := fp700.SendCommand(43, "I\t")
 	readHeaderDecoded, err := decodedMessage.DecodeMessage(readHeader)
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
+		logger.Error.Println(err)
+		return shdResponse, err
 	}
 
 	shdResponse.ErrorCode, _ = strconv.Atoi(readHeaderDecoded[0])
@@ -126,5 +132,5 @@ func GetHeaderChanges() SetHeadersDataResponse {
 	shdResponse.MaxHdrChanges, _ = strconv.Atoi(readHeaderDecoded[2])
 	shdResponse.MaxHdrLines, _ = strconv.Atoi(readHeaderDecoded[3])
 
-	return shdResponse
+	return shdResponse, nil
 }

@@ -2,6 +2,8 @@ package commands
 
 import (
 	"errors"
+	"fmt"
+	"github.com/chyupa/apiServer/utils/logger"
 	"github.com/chyupa/fp700"
 	"github.com/chyupa/fp700/utils"
 	"log"
@@ -11,7 +13,8 @@ func Time() (string, error) {
 	var decodedMessage = &utils.DecodedMessage{}
 	reply, err := fp700.SendCommand(62, "")
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
+		logger.Error.Println(err)
 		return "", err
 	}
 

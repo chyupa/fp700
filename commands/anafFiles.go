@@ -5,9 +5,10 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/xml"
+	"fmt"
+	"github.com/chyupa/apiServer/utils/logger"
 	"github.com/chyupa/fp700"
 	"github.com/chyupa/fp700/utils"
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -27,8 +28,8 @@ type AnafXml struct {
 	Dir     AnafDir  `xml:"dir"`
 }
 
-type AnafFilesResponse struct {
-}
+type AnafFilesResponse struct{}
+
 type AnafFilesRequest struct {
 	Start string `json:"start"`
 	End   string `json:"end"`
@@ -40,7 +41,8 @@ func AnafFiles(data AnafFilesRequest) (map[string]string, error) {
 
 	initialCommand, err := fp700.SendCommand(128, "0\t"+data.Start+"\t"+data.End+"\t")
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
+		logger.Error.Println(err)
 	}
 
 	_, err = decodedMessage.DecodeMessage(initialCommand)
@@ -67,7 +69,8 @@ func AnafFiles(data AnafFilesRequest) (map[string]string, error) {
 		if len(reply) > 1 {
 			msg, err := decodedMessage.DecodeMessage(reply)
 			if err != nil {
-				log.Println(err)
+				fmt.Println(err)
+				logger.Error.Println(err)
 				return nil, err
 			}
 			if len(msg) > 2 && !strings.Contains(msg[1], "XML") {
@@ -109,7 +112,8 @@ func AnafFiles(data AnafFilesRequest) (map[string]string, error) {
 			if len(reply) > 1 {
 				msg, err := decodedMessage.DecodeMessage(reply)
 				if err != nil {
-					log.Println(err)
+					fmt.Println(err)
+					logger.Error.Println(err)
 					return nil, err
 				}
 				if len(msg) > 2 && !strings.Contains(msg[1], "xml") {

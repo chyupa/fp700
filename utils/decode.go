@@ -3,6 +3,7 @@ package utils
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -43,7 +44,7 @@ func (dm *DecodedMessage) DecodeMessage(message []byte) ([]string, error) {
 		split := strings.Split(string(msg), "\t")
 		errorCode, _ := strconv.Atoi(split[0])
 		if errorCode != -100003 && errorCode != -111015 && errorCode != -111016 && errorCode < 0 {
-			return nil, errors.New(fmt.Sprintf("%d", errorCode))
+			return nil, errors.New(fmt.Sprintf("%d", int(math.Abs(float64(errorCode)))))
 		}
 		return split, nil
 	}
