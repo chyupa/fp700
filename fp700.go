@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"github.com/chyupa/fp700-server/utils/logger"
 	"github.com/chyupa/fp700/utils"
 	"go.bug.st/serial.v1"
-	"log"
 )
 
 var Port string
@@ -23,7 +23,7 @@ func OpenPort() (serial.Port, error) {
 
 	if err != nil {
 		fmt.Println("open error is", err)
-		log.Fatal(err)
+		logger.Error.Println(err)
 		return nil, errors.New("nu am putut deschide portul")
 	}
 

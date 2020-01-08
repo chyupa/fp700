@@ -9,7 +9,6 @@ import (
 
 	"github.com/chyupa/fp700"
 	"github.com/chyupa/fp700-server/utils/logger"
-	"github.com/chyupa/fp700/utils"
 )
 
 type Diagnostic struct {
@@ -48,7 +47,6 @@ type MaintenanceDataResponse struct {
 }
 
 func MaintenanceData() (MaintenanceDataResponse, error) {
-	var decodedMessage = &utils.DecodedMessage{}
 	var mdResponse MaintenanceDataResponse
 
 	operNameResponse, _ := fp700.SendCommand(255, "OperName\t0\t\t")
@@ -268,7 +266,6 @@ type HeadersDataResponse struct {
 }
 
 func HeadersData() HeadersDataResponse {
-	var decodedMessage = &utils.DecodedMessage{}
 	var hdResponse HeadersDataResponse
 
 	// header
@@ -334,7 +331,6 @@ type SetHeadersDataRequest struct {
 }
 
 func SetHeadersData(data SetHeadersDataRequest) (SetHeadersDataResponse, error) {
-	var decodedMessage = &utils.DecodedMessage{}
 	var shdResponse SetHeadersDataResponse
 	fp700.SendCommand(43, "W\t1\t"+data.Header1+"\t")
 	fp700.SendCommand(43, "W\t2\t"+data.Header2+"\t")
@@ -364,7 +360,6 @@ func SetHeadersData(data SetHeadersDataRequest) (SetHeadersDataResponse, error) 
 }
 
 func GetHeaderChanges() (SetHeadersDataResponse, error) {
-	var decodedMessage = &utils.DecodedMessage{}
 	var shdResponse SetHeadersDataResponse
 
 	// read information regarding header changes
@@ -390,7 +385,6 @@ type FootersDataResponse struct {
 }
 
 func FootersData() (FootersDataResponse, error) {
-	var decodedMessage = &utils.DecodedMessage{}
 	var fdResponse FootersDataResponse
 
 	// header
@@ -421,7 +415,6 @@ type SetFootersDataRequest struct {
 }
 
 func SetFootersData(data SetFootersDataRequest) error {
-	var decodedMessage = &utils.DecodedMessage{}
 	topFooter, _ := fp700.SendCommand(255, "Footer\t0\t"+data.TopLine+"\t")
 	_, err := decodedMessage.DecodeMessage(topFooter)
 	if err != nil {
@@ -445,7 +438,6 @@ func PrintDiagnostic() {
 }
 
 func Time() (string, error) {
-	var decodedMessage = &utils.DecodedMessage{}
 	reply, err := fp700.SendCommand(62, "")
 	if err != nil {
 		fmt.Println(err)
@@ -471,8 +463,6 @@ type SetTimeRequest struct {
 }
 
 func SetTime(data SetTimeRequest) string {
-	var decodedMessage = &utils.DecodedMessage{}
-
 	setTimeResponse, _ := fp700.SendCommand(61, data.Time+"\t")
 	setTimeDecoded, err := decodedMessage.DecodeMessage(setTimeResponse)
 	if err != nil {
@@ -505,8 +495,6 @@ func FabricationNumber() {
 }
 
 func GetOperatorName() (string, error) {
-
-	var decodedMessage utils.DecodedMessage
 	cmd, _ := fp700.SendCommand(255, "OperName\t0\t\t")
 
 	response, err := decodedMessage.DecodeMessage(cmd)
@@ -522,7 +510,6 @@ type SetOperatorNameRequest struct {
 }
 
 func SetOperatorName(data SetOperatorNameRequest) (string, error) {
-	var decodedMessage utils.DecodedMessage
 	cmd, _ := fp700.SendCommand(255, fmt.Sprintf("OperName\t0\t%s\t", data.Name))
 
 	response, err := decodedMessage.DecodeMessage(cmd)
@@ -534,8 +521,6 @@ func SetOperatorName(data SetOperatorNameRequest) (string, error) {
 }
 
 func GetOperatorPassword() (string, error) {
-
-	var decodedMessage utils.DecodedMessage
 	cmd, _ := fp700.SendCommand(255, "OperPasw\t0\t\t")
 
 	response, err := decodedMessage.DecodeMessage(cmd)
@@ -552,7 +537,6 @@ type SetOperatorPasswordRequest struct {
 }
 
 func SetOperatorPassword(data SetOperatorPasswordRequest) error {
-	var decodedMessage utils.DecodedMessage
 	payload := fmt.Sprintf("1\t%s\t%s\t", data.OldPass, data.NewPass)
 	cmd, _ := fp700.SendCommand(101, payload)
 
@@ -565,7 +549,6 @@ func SetOperatorPassword(data SetOperatorPasswordRequest) error {
 }
 
 func RemainingZReports() (int, error) {
-	var decodedMessage = &utils.DecodedMessage{}
 	zReports, _ := fp700.SendCommand(68, "")
 	zReportsDecoded, err := decodedMessage.DecodeMessage(zReports)
 	if err != nil {
@@ -580,8 +563,6 @@ func RemainingZReports() (int, error) {
 }
 
 func GetVat() (string, error) {
-	var decodedMessage = &utils.DecodedMessage{}
-
 	// ActiveVatGroups
 	activeVatGroupsResponse, _ := fp700.SendCommand(50, "")
 	activeVatGroupsDecoded, err := decodedMessage.DecodeMessage(activeVatGroupsResponse)
@@ -594,8 +575,6 @@ func GetVat() (string, error) {
 }
 
 func GetVatChanges() (int, error) {
-	var decodedMessage = &utils.DecodedMessage{}
-
 	// nVatChanges
 	nVatChangesResponse, _ := fp700.SendCommand(255, "nVatChanges\t\t\t")
 	nVatChangesDecoded, err := decodedMessage.DecodeMessage(nVatChangesResponse)
@@ -613,8 +592,6 @@ type SetVatRequest struct {
 }
 
 func SetVat(data SetVatRequest) (int, error) {
-	var decodedMessage = &utils.DecodedMessage{}
-
 	setVatResponse, _ := fp700.SendCommand(83, data.Vat+"\t")
 	setVatDecoded, err := decodedMessage.DecodeMessage(setVatResponse)
 	if err != nil {
@@ -627,15 +604,22 @@ func SetVat(data SetVatRequest) (int, error) {
 }
 
 type CloseDmjeRequest struct {
-	servicePass string
+	Password string
 }
 
 func CloseDmje(data CloseDmjeRequest) (int, error) {
-	fp700.SendCommand(253, "0\t"+data.servicePass+"\t")
-	closeResponse, _ := fp700.SendCommand(253, "2\t"+data.servicePass+"\t\t")
-	var decodedMessage = &utils.DecodedMessage{}
+	activatePassword, _ := fp700.SendCommand(253, fmt.Sprintf("0\t%s\t", data.Password))
+	_, err := decodedMessage.DecodeMessage(activatePassword)
+	if err != nil {
+		fmt.Println(err)
+		logger.Error.Println(err)
+		return 0, err
+	}
+
+	closeResponse, _ := fp700.SendCommand(253, fmt.Sprintf("2\t%s\t\t", data.Password))
 	msg, err := decodedMessage.DecodeMessage(closeResponse)
 	if err != nil {
+		fmt.Println(err)
 		log.Println(err)
 		return 0, err
 	}
@@ -645,11 +629,11 @@ func CloseDmje(data CloseDmjeRequest) (int, error) {
 }
 
 type FiscalizeRequest struct {
-	date        string `json:"dateTime"`
-	fabrication string `json:"fabricationNumber"`
-	vat         string `json:"vatValue"`
-	tax         string `json:"taxNo"`
-	cif         string `json:"cif"`
+	Date        string `json:"dateTime"`
+	Fabrication string `json:"fabricationNumber"`
+	Vat         string `json:"vatValue"`
+	Tax         string `json:"taxNo"`
+	Cif         string `json:"cif"`
 }
 
 type FiscalizeResponse struct {
@@ -657,30 +641,34 @@ type FiscalizeResponse struct {
 }
 
 func Fiscalize(data FiscalizeRequest) (FiscalizeResponse, error) {
-	var decodedMessage = &utils.DecodedMessage{}
 	var fResponse FiscalizeResponse
 	// set time
-	timeResponse, _ := fp700.SendCommand(61, data.date+"\t")
+	timeResponse, _ := fp700.SendCommand(61, fmt.Sprintf("%s\t", data.Date))
 	log.Println(timeResponse)
 
 	// set serial number
-	serialNumberResponse, _ := fp700.SendCommand(91, data.fabrication+"\t")
+	serialNumberResponse, _ := fp700.SendCommand(91, fmt.Sprintf("%s\t", data.Fabrication))
 	log.Println(serialNumberResponse)
 
 	// set VAT number
-	vatResponse, _ := fp700.SendCommand(83, data.vat+"\t")
+	vatResponse, _ := fp700.SendCommand(83, fmt.Sprintf("%s\t", data.Vat))
 	log.Println(vatResponse)
 
 	// set Fiscalization
-	fiscalizeResponse, _ := fp700.SendCommand(72, data.tax+"\t"+data.cif+"\t")
+	fiscalizeResponse, _ := fp700.SendCommand(72, fmt.Sprintf("%s\t%s\t", data.Tax, data.Cif))
 	log.Println(fiscalizeResponse)
 	msg, err := decodedMessage.DecodeMessage(fiscalizeResponse)
 	if err != nil {
 		log.Println(err)
-		return FiscalizeResponse{}, err
+		return fResponse, err
 	}
 
 	fResponse.ErrorCode, _ = strconv.Atoi(msg[0])
+	if fResponse.ErrorCode != 0 {
+		fmt.Println("could not fiscalize")
+		logger.Error.Println("could not fiscalize")
+		return fResponse, errors.New("could not fiscalize")
+	}
 
 	// disable close open receipt printer option
 	fp700.SendCommand(255, "DsblKeyCloseReceipt\t\t1\t")
@@ -690,4 +678,101 @@ func Fiscalize(data FiscalizeRequest) (FiscalizeResponse, error) {
 	fp700.SendCommand(255, "DsblKeyFmReports\t\t1\t")
 
 	return fResponse, nil
+}
+
+type ChangeServicePasswordRequest struct {
+	OldPass string `json:"oldPass"`
+	NewPass string `json:"newPass"`
+}
+
+func ChangeServicePassword(data ChangeServicePasswordRequest) error {
+	response, err := fp700.SendCommand(253, fmt.Sprintf("1\t%s\t%s\t", data.OldPass, data.NewPass))
+	if err != nil {
+		fmt.Println(err)
+		logger.Error.Println(err)
+		return err
+	}
+
+	_, err = decodedMessage.DecodeMessage(response)
+	if err != nil {
+		fmt.Println(err)
+		logger.Error.Println(err)
+		return err
+	}
+
+	return nil
+}
+
+type ActivateServicePasswordRequest struct {
+	Password string `json:"password"`
+}
+
+func ActivateServicePassword(data ActivateServicePasswordRequest) error {
+	activateServicePassword, err := fp700.SendCommand(253, fmt.Sprintf("0\t%s\t", data.Password))
+	if err != nil {
+		fmt.Println(err)
+		logger.Error.Println(err)
+		return err
+	}
+
+	_, err = decodedMessage.DecodeMessage(activateServicePassword)
+	if err != nil {
+		fmt.Println(err)
+		logger.Error.Println(err)
+		return err
+	}
+
+	return nil
+}
+
+func SetPrinterMode(mode string) (string, error) {
+	printerMode, err := fp700.SendCommand(149, fmt.Sprintf("%s\t", mode))
+	if err != nil {
+		fmt.Println(err)
+		logger.Error.Println(err)
+		return "", err
+	}
+
+	pmDecoded, err := decodedMessage.DecodeMessage(printerMode)
+	if err != nil {
+		fmt.Println(err)
+		logger.Error.Println(err)
+		return "", err
+	}
+
+	return pmDecoded[1], nil
+}
+
+type LastZDateResponse struct {
+	ErrorCode     string
+	BonFiscal     string
+	DateBonFiscal string
+	Znumber       string
+	Zdate         string
+}
+
+func GetLastZDate() (LastZDateResponse, error) {
+	response, err := fp700.SendCommand(123, "3\t")
+	if err != nil {
+		fmt.Println(err)
+		logger.Error.Println(err)
+		return LastZDateResponse{}, err
+	}
+
+	decoded, err := decodedMessage.DecodeMessage(response)
+	if err != nil {
+		fmt.Println(err)
+		logger.Error.Println(err)
+		return LastZDateResponse{}, err
+	}
+
+	var lzdResponse = LastZDateResponse{
+		ErrorCode:     decoded[0],
+		BonFiscal:     decoded[1],
+		DateBonFiscal: decoded[2],
+		Znumber:       decoded[3],
+		Zdate:         decoded[4],
+	}
+
+	return lzdResponse, nil
 }

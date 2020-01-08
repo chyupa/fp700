@@ -5,9 +5,8 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/chyupa/apiServer/utils/logger"
 	"github.com/chyupa/fp700"
-	"github.com/chyupa/fp700/utils"
+	"github.com/chyupa/fp700-server/utils/logger"
 )
 
 type CommandRequest struct {
@@ -31,7 +30,6 @@ type TransactionResponse struct {
 }
 
 func Transaction(transactionRequest TransactionRequest) (TransactionResponse, error) {
-	var decodedMessage = &utils.DecodedMessage{}
 	// check if receipt is open and cancel it
 	LastReceipt(true)
 
@@ -76,8 +74,6 @@ type CancelReceiptResponse struct {
 
 func CancelReceipt() (CancelReceiptResponse, error) {
 	response, _ := fp700.SendCommand(60, "")
-	var decodedMessage = &utils.DecodedMessage{}
-
 	if len(response) > 1 {
 		msg, err := decodedMessage.DecodeMessage(response)
 		if err != nil {
@@ -109,19 +105,23 @@ type LastReceiptResponse struct {
 	Payed      int
 }
 
-func LastReceipt(shouldCancel bool) LastReceiptResponse {
-	var decodedMessage = &utils.DecodedMessage{}
+func LastReceipt(shouldCancel bool) (LastReceiptResponse, error) {
 	var lastReceiptResponse LastReceiptResponse
 	lastReceipt, _ := fp700.SendCommand(76, "")
 
 	if len(lastReceipt) > 2 {
 		msg, err := decodedMessage.DecodeMessage(lastReceipt)
 		if err != nil {
-			log.Println(err)
+			logger.Error.Println(err)
+			return lastReceiptResponse, err
 		}
 		// receipt is open so we need to close it
 		if msg[1] == "1" && shouldCancel {
-			fp700.SendCommand(60, "")
+			cancel, _ := fp700.SendCommand(60, "")
+			_, err := decodedMessage.DecodeMessage(cancel)
+			if err != nil {
+				return lastReceiptResponse, err
+			}
 		}
 		lastReceiptResponse.ErrorCode, _ = strconv.Atoi(msg[0])
 		lastReceiptResponse.IsOpen, _ = strconv.Atoi(msg[1])
@@ -133,7 +133,7 @@ func LastReceipt(shouldCancel bool) LastReceiptResponse {
 		lastReceiptResponse.Payed, _ = strconv.Atoi(msg[7])
 	}
 
-	return lastReceiptResponse
+	return lastReceiptResponse, nil
 }
 
 type ServiceAmountRequest struct {
@@ -141,7 +141,6 @@ type ServiceAmountRequest struct {
 }
 
 func ServiceAmount(data ServiceAmountRequest) int {
-	var decodedMessage = &utils.DecodedMessage{}
 	cmdResponse, _ := fp700.SendCommand(70, "0\t"+data.amount+"\t")
 
 	msg, err := decodedMessage.DecodeMessage(cmdResponse)

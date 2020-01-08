@@ -23,9 +23,6 @@ type PrintEjRequest struct {
 }
 
 func PrintEj(pEjReq PrintEjRequest) error {
-
-	var decodedMessage = &utils.DecodedMessage{}
-
 	command := 125
 	payload := fmt.Sprintf("13\t%s\t%s\t", pEjReq.Start, pEjReq.End)
 	if pEjReq.ByDate {
@@ -93,8 +90,6 @@ func ReadEj(ejReq EjRequest) (string, error) {
 		payload = fmt.Sprintf("%s\t%s\t%s\t", ejReq.Start, ejReq.End, ejReq.ReportType)
 	}
 
-	var decodedMessage = &utils.DecodedMessage{}
-
 	// initialize reading from EJ
 	initialCommand, err := fp700.SendCommand(command, payload)
 	if err != nil {
@@ -160,8 +155,6 @@ type MfRequest struct {
 }
 
 func ReadMf(mfReq MfRequest) (string, error) {
-	var decodedMessage = &utils.DecodedMessage{}
-
 	var command = 95
 	payload := fmt.Sprintf("%s\t%s\t%s\t", mfReq.ReportType, mfReq.Start, mfReq.End)
 	if mfReq.ByDate {
@@ -240,9 +233,6 @@ type AnafFilesRequest struct {
 }
 
 func AnafFiles(data AnafFilesRequest) (map[string]string, error) {
-
-	var decodedMessage = &utils.DecodedMessage{}
-
 	initialCommand, err := fp700.SendCommand(128, "0\t"+data.Start+"\t"+data.End+"\t")
 	if err != nil {
 		fmt.Println(err)
@@ -347,7 +337,6 @@ type ReportXResponse struct {
 }
 
 func PrintReport(reportType string) (ReportXResponse, error) {
-	var decodedMessage = &utils.DecodedMessage{}
 	response := ReportXResponse{}
 
 	payload := fmt.Sprintf("%s\t", reportType)
