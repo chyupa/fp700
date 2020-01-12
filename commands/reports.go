@@ -80,6 +80,7 @@ type EjRequest struct {
 	End        string `json:"end"`
 	ReportType string `json:"reportType"`
 	ByDate     bool   `json:"byDate"`
+	DocType    string `json:"docType"`
 }
 
 func ReadEj(ejReq EjRequest) (string, error) {
@@ -119,7 +120,7 @@ func ReadEj(ejReq EjRequest) (string, error) {
 	response := bytes.Buffer{}
 
 	for {
-		readCommand := utils.EncodeMessage(125, "21\t\t\t")
+		readCommand := utils.EncodeMessage(125, fmt.Sprintf("%s\t\t\t", ejReq.DocType))
 
 		port.Write(readCommand)
 
@@ -129,11 +130,14 @@ func ReadEj(ejReq EjRequest) (string, error) {
 		if len(reply) > 1 {
 			msg, err := decodedMessage.DecodeMessage(reply)
 			if err != nil {
-				log.Println(err)
+				fmt.Println(err)
+				logger.Error.Println(err)
+				return "", err
 			}
 
 			if len(msg) > 2 {
-				response.WriteString(msg[1] + "\r\n")
+				fmt.Println(msg, msg[1], len(msg[1]))
+				response.WriteString(msg[1] + "\n")
 			} else {
 				exitCode, _ := strconv.Atoi(msg[0])
 				if exitCode < -1 {
@@ -143,8 +147,10 @@ func ReadEj(ejReq EjRequest) (string, error) {
 		}
 
 	}
+	// remove last empty line from the string
+	woLastNewLine := response.Bytes()[:len(response.Bytes())-1]
 
-	return response.String(), nil
+	return string(woLastNewLine), nil
 }
 
 type MfRequest struct {

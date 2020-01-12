@@ -170,14 +170,13 @@ func MaintenanceData() (MaintenanceDataResponse, error) {
 	mdResponse.NZReport = nzReportDecoded[1]
 
 	// Fiscalized
-	fiscalizedResponse, _ := fp700.SendCommand(255, "Fiscalized\t\t\t")
-	fiscalizedDecoded, err := decodedMessage.DecodeMessage(fiscalizedResponse)
+	fiscalized, err := GetFiscalization()
 	if err != nil {
 		fmt.Println(err)
 		logger.Error.Println(err)
 		return mdResponse, err
 	}
-	mdResponse.Fiscalized = fiscalizedDecoded[1]
+	mdResponse.Fiscalized = fiscalized
 
 	// ActiveVatGroups
 	activeVatGroupsResponse, _ := fp700.SendCommand(50, "")
@@ -222,7 +221,7 @@ func MaintenanceData() (MaintenanceDataResponse, error) {
 	mdResponse.OperatingMode = operatingModeDecoded[1]
 
 	// Diagnostic
-	diagnosticResponse, _ := fp700.SendCommand(90, "1\t")
+	diagnosticResponse, err := fp700.SendCommand(90, "1\t")
 	diagnosticResponseDecoded, err := decodedMessage.DecodeMessage(diagnosticResponse)
 	if err != nil {
 		fmt.Println(err)
@@ -237,21 +236,14 @@ func MaintenanceData() (MaintenanceDataResponse, error) {
 	mdResponse.Diagnostic = mdDiagnosticResponse
 
 	// Device Information
-	deviceInformationResponse, _ := fp700.SendCommand(123, "1\t")
-	deviceInformationResponseDecoded, err := decodedMessage.DecodeMessage(deviceInformationResponse)
+	deviceInformationResponse, err := GetDeviceInfo()
 	if err != nil {
 		fmt.Println(err)
 		logger.Error.Println(err)
 		return mdResponse, err
 	}
 
-	mdDeviceInformationResponse := DeviceInformation{
-		FabricationNumber: deviceInformationResponseDecoded[1],
-		FiscalNumber:      deviceInformationResponseDecoded[2],
-		CIF:               strings.Replace(deviceInformationResponseDecoded[5], "CIF: ", "", 1),
-	}
-
-	mdResponse.DeviceInformation = mdDeviceInformationResponse
+	mdResponse.DeviceInformation = deviceInformationResponse
 
 	return mdResponse, nil
 }
@@ -775,4 +767,36 @@ func GetLastZDate() (LastZDateResponse, error) {
 	}
 
 	return lzdResponse, nil
+}
+
+func GetDeviceInfo() (DeviceInformation, error) {
+	// Device Information
+	deviceInformationResponse, _ := fp700.SendCommand(123, "1\t")
+	deviceInformationResponseDecoded, err := decodedMessage.DecodeMessage(deviceInformationResponse)
+	if err != nil {
+		fmt.Println(err)
+		logger.Error.Println(err)
+		return DeviceInformation{}, err
+	}
+
+	mdDeviceInformationResponse := DeviceInformation{
+		FabricationNumber: deviceInformationResponseDecoded[1],
+		FiscalNumber:      deviceInformationResponseDecoded[2],
+		CIF:               strings.Replace(deviceInformationResponseDecoded[5], "CIF: ", "", 1),
+	}
+
+	return mdDeviceInformationResponse, nil
+}
+
+func GetFiscalization() (string, error) {
+
+	fiscalizedResponse, _ := fp700.SendCommand(255, "Fiscalized\t\t\t")
+	fiscalizedDecoded, err := decodedMessage.DecodeMessage(fiscalizedResponse)
+	if err != nil {
+		fmt.Println(err)
+		logger.Error.Println(err)
+		return "", err
+	}
+
+	return fiscalizedDecoded[1], nil
 }
