@@ -136,19 +136,28 @@ func LastReceipt(shouldCancel bool) (LastReceiptResponse, error) {
 	return lastReceiptResponse, nil
 }
 
-type ServiceAmountRequest struct {
-	amount string `json:"amount"`
+type ServiceAmountResponse struct {
+	ErrorCode int
+	CashSum   float64
+	CashIn    float64
+	CashOut   float64
 }
 
-func ServiceAmount(data ServiceAmountRequest) int {
-	cmdResponse, _ := fp700.SendCommand(70, "0\t"+data.amount+"\t")
+func ServiceAmount(amount string) (ServiceAmountResponse, error) {
+	cmdResponse, _ := fp700.SendCommand(70, fmt.Sprintf("0\t%s\t", amount))
 
 	msg, err := decodedMessage.DecodeMessage(cmdResponse)
 	if err != nil {
+		fmt.Println(err)
 		log.Println(err)
+		return ServiceAmountResponse{}, err
 	}
 
-	errorCode, _ := strconv.Atoi(msg[0])
+	saResponse := ServiceAmountResponse{}
+	saResponse.ErrorCode, _ = strconv.Atoi(msg[0])
+	saResponse.CashSum, _ = strconv.ParseFloat(msg[1], 32)
+	saResponse.CashIn, _ = strconv.ParseFloat(msg[2], 32)
+	saResponse.CashOut, _ = strconv.ParseFloat(msg[3], 32)
 
-	return errorCode
+	return saResponse, nil
 }
