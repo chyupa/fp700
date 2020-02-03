@@ -33,7 +33,7 @@ func Transaction(transactionRequest TransactionRequest) (TransactionResponse, er
 	// check if receipt is open and cancel it
 	LastReceipt(true)
 
-	var transactionResponse TransactionResponse
+	transactionResponse := TransactionResponse{IsOpen: 1}
 	for _, command := range transactionRequest.Commands {
 		response, _ := fp700.SendCommand(command.Code, command.Payload)
 		if len(response) > 2 {

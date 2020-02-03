@@ -74,7 +74,7 @@ func (dm *DecodedMessage) validateChecksum() bool {
 }
 
 func reconstructHexFromByteArray(byteArray []byte) string {
-	var hexString = ""
+	hexString := ""
 
 	for _, bit := range byteArray {
 		b := bit - 0x30
@@ -183,13 +183,12 @@ func ArrayContains(arr []byte, s int) bool {
 	return false
 }
 
-var offset = 32
-
 func calculateLength(payload string) []int {
-	var lengthBytes = 4
-	var seqBytes = 1
-	var cmdBytes = 4
-	var preambleBytes = 1
+	lengthBytes := 4
+	seqBytes := 1
+	cmdBytes := 4
+	preambleBytes := 1
+	offset := 32
 
 	lengthDec := lengthBytes + seqBytes + cmdBytes + preambleBytes + len(payload) + offset
 	lengthHex := strconv.FormatInt(int64(lengthDec), 16)
